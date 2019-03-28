@@ -1,6 +1,6 @@
 var express = require('express');
 var bcrypt = require('bcryptjs');
-var jwt = require('jsonwebtoken');
+// var jwt = require('jsonwebtoken');
 
 // var SEED = require('../config/config').SEED;
 var mdAutenticacion = require('../middlewares/autenticacion');
@@ -14,7 +14,12 @@ var Usuario = require('../models/usuario');
  */
 app.get('/', (req, res, next) => {
 
+    var desde = req.query.desde || 0;
+    desde = Number(desde);
+
     Usuario.find({}, 'nombre email img role')
+        .skip(desde)
+        .limit(5)
         .exec(
             (err, usuarios) => {
                 if (err) {
@@ -25,9 +30,13 @@ app.get('/', (req, res, next) => {
                     });
                 }
 
-                res.status(200).json({
-                    ok: true,
-                    usuarios: usuarios //! se puede evitar usuarios ES6
+                Usuario.count({}, (err, conteo) => {
+                    res.status(200).json({
+                        ok: true,
+                        usuarios: usuarios, //! se puede evitar usuarios ES6
+                        total: conteo
+                    });
+                    
                 });
 
             });
@@ -52,7 +61,7 @@ app.put('/:id', mdAutenticacion.verificaToken, (req, res, next) => {
         if (err) {
             return res.status(500).json({
                 ok: false,
-                mensaje: 'Error al buscar usuario usuarios',
+                mensaje: 'Error al buscar usuario',
                 errors: err
             });
         }
@@ -74,7 +83,7 @@ app.put('/:id', mdAutenticacion.verificaToken, (req, res, next) => {
             if (err) {
                 return res.status(400).json({
                     ok: false,
-                    mensaje: 'Error al actualizar usuario usuarios',
+                    mensaje: 'Error al actualizar usuario',
                     errors: err
                 });
             }
